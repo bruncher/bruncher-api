@@ -1,17 +1,14 @@
 import express from "express";
-
 import { mountCrypto } from "./crypto.js";
 
 const app = express();
 
-// Mount crypto routes
 mountCrypto(app);
 
-// Shared health
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    service: "crypto",
+    services: ["crypto"],
     time: new Date().toISOString()
   });
 });
