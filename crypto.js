@@ -2,6 +2,9 @@ import express from "express";
 import axios from "axios";
 import cors from "cors";
 
+const router = express.Router();
+router.use(cors());
+
 function toLookerTimestamp(ts) {
   const d = new Date(ts);
   const yyyy = d.getUTCFullYear();
@@ -12,9 +15,6 @@ function toLookerTimestamp(ts) {
   const ss = String(d.getUTCSeconds()).padStart(2, "0");
   return `${yyyy}${mm}${dd}${hh}${mi}${ss}`;
 }
-
-const app = express();
-app.use(cors());
 
 // === Cache + timing ===
 let cache = null;
@@ -86,7 +86,7 @@ async function fetchCoinData(force = false) {
 }
 
 // === API route ===
-app.get("/api/prices", async (req, res) => {
+router.get("/api/prices", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 250;
     const data = await fetchCoinData();
@@ -183,7 +183,7 @@ const PRELOAD_COINS = [
   "uniswap", "crypto-com-chain", "aave", "matic-network"
 ];
 
-app.get("/api/compare", async (req, res) => {
+router.get("/api/compare", async (req, res) => {
   const { coin1 = "bitcoin", coin2 = "ethereum" } = req.query;
   const key = [coin1, coin2].sort().join("_");
   console.log(`🔍 Compare request: ${coin1} vs ${coin2}`);
@@ -298,7 +298,7 @@ app.get("/api/compare", async (req, res) => {
 });
 
 // === Looker Studio flat table version ===
-app.get("/api/compare_flat", async (req, res) => {
+router.get("/api/compare_flat", async (req, res) => {
   try {
     const { coin1 = "bitcoin", coin2 = "ethereum" } = req.query;
 
@@ -373,7 +373,7 @@ async function ensurePreloadedCoin(coinId) {
 }
 
 // === Looker: All preloaded coins, flattened ===
-app.get("/api/compare_flat_all", async (req, res) => {
+router.get("/api/compare_flat_all", async (req, res) => {
   try {
     // ── 1) Use ?coins=a,b,c if provided, otherwise use preload list ─────────
     let coinList = [];
@@ -455,7 +455,7 @@ app.get("/api/compare_flat_all", async (req, res) => {
 });
 
 // --- Single coin flat time-series for Looker Studio ---
-app.get("/api/flat_single", async (req, res) => {
+router.get("/api/flat_single", async (req, res) => {
   try {
     const coinId = (req.query.coin || "").toLowerCase().trim();
     if (!coinId) {
@@ -546,7 +546,7 @@ setInterval(async () => {
 }, 15 * 1000);
 
 // === Health check ===
-app.get("/health", (req, res) => {
+router.get("/health", (req, res) => {
   const ageSec = ((Date.now() - lastFetch) / 1000).toFixed(0);
   res.json({
     status: "ok",
@@ -557,7 +557,7 @@ app.get("/health", (req, res) => {
 });
 
 // === Simple ping endpoint ===
-app.get("/ping", (req, res) => {
+router.get("/ping", (req, res) => {
   res.json({ status: "alive", timestamp: new Date().toISOString() });
 });
 
@@ -696,9 +696,7 @@ async function startKeepAlive() {
 }
 
 // === Start server ===
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+export function mountCrypto(app) {
   console.log(`🌐 Public URL: ${process.env.RENDER_EXTERNAL_URL || "https://coingecko-wrapper.onrender.com"}`);
   console.log("⏳ Waiting 30s before first warm-up...");
   setTimeout(async () => {
@@ -707,7 +705,7 @@ app.listen(PORT, () => {
     setTimeout(preloadAllCharts, 10000);
   }, 30000);
 
-  startKeepAlive();
+  app.use("/crypto", router);
 });
 
 // === Auto-refresh preloaded charts every 12 hours ===
