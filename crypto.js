@@ -303,7 +303,7 @@ router.get("/compare_flat", async (req, res) => {
     const { coin1 = "bitcoin", coin2 = "ethereum" } = req.query;
 
     // Call compare endpoint internally
-    const url = `${req.protocol}://${req.get("host")}/api/compare`;
+    const url = `${req.protocol}://${req.get("host")}/crypto/compare`;
     const response = await axios.get(url, { params: { coin1, coin2 } });
 
     const raw = response.data.data; // [{ name, prices }]
