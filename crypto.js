@@ -85,7 +85,11 @@ async function fetchCoinData(force = false) {
   return fetchPromise;
 }
 
-// === API route ===
+// === API routes ===
+router.get("/", (req, res) => {
+  res.json({ status: "ok", message: "crypto-api live" });
+});
+
 router.get("/prices", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 250;
