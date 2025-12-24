@@ -86,7 +86,7 @@ async function fetchCoinData(force = false) {
 }
 
 // === API route ===
-router.get("/api/prices", async (req, res) => {
+router.get("/prices", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 250;
     const data = await fetchCoinData();
@@ -183,7 +183,7 @@ const PRELOAD_COINS = [
   "uniswap", "crypto-com-chain", "aave", "matic-network"
 ];
 
-router.get("/api/compare", async (req, res) => {
+router.get("/compare", async (req, res) => {
   const { coin1 = "bitcoin", coin2 = "ethereum" } = req.query;
   const key = [coin1, coin2].sort().join("_");
   console.log(`🔍 Compare request: ${coin1} vs ${coin2}`);
@@ -298,7 +298,7 @@ router.get("/api/compare", async (req, res) => {
 });
 
 // === Looker Studio flat table version ===
-router.get("/api/compare_flat", async (req, res) => {
+router.get("/compare_flat", async (req, res) => {
   try {
     const { coin1 = "bitcoin", coin2 = "ethereum" } = req.query;
 
@@ -373,7 +373,7 @@ async function ensurePreloadedCoin(coinId) {
 }
 
 // === Looker: All preloaded coins, flattened ===
-router.get("/api/compare_flat_all", async (req, res) => {
+router.get("/compare_flat_all", async (req, res) => {
   try {
     // ── 1) Use ?coins=a,b,c if provided, otherwise use preload list ─────────
     let coinList = [];
@@ -455,7 +455,7 @@ router.get("/api/compare_flat_all", async (req, res) => {
 });
 
 // --- Single coin flat time-series for Looker Studio ---
-router.get("/api/flat_single", async (req, res) => {
+router.get("/flat_single", async (req, res) => {
   try {
     const coinId = (req.query.coin || "").toLowerCase().trim();
     if (!coinId) {
