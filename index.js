@@ -1,9 +1,11 @@
 import express from "express";
 import { mountCrypto } from "./crypto.js";
+import { mountGaming } from "./gaming.js";
 
 const app = express();
 
 mountCrypto(app);
+mountGaming(app);
 
 app.get("/health", (req, res) => {
   res.json({
