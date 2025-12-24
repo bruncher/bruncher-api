@@ -15,6 +15,10 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/ping", (req, res) => {
+  res.json({ status: "alive", timestamp: new Date().toISOString() });
+});
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
