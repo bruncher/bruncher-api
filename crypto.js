@@ -706,7 +706,7 @@ export function mountCrypto(app) {
   }, 30000);
 
   app.use("/crypto", router);
-});
+};
 
 // === Auto-refresh preloaded charts every 12 hours ===
 const THREE_HOURS = 3 * 60 * 60 * 1000;
