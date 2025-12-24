@@ -1,0 +1,17 @@
+{
+  "name": "bruncher-api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "axios": "^1.7.4",
+    "cors": "^2.8.5"
+  },
+  "description": "Combined API microservice",
+  "author": "bruncher",
+  "license": "MIT"
+}
