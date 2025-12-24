@@ -7,6 +7,14 @@ const app = express();
 mountCrypto(app);
 mountGaming(app);
 
+app.get("/", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "bruncher-api live",
+    services: ["crypto", "gaming"]
+  });
+});
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
