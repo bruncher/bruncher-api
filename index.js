@@ -22,7 +22,7 @@ app.get("/ping", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    services: ["crypto"],
+    services: ["crypto", "gaming"],
     time: new Date().toISOString()
   });
 });
