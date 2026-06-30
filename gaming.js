@@ -76,6 +76,7 @@ export async function mountGaming(app) {
       // Keep fetching until we have 100 unique games or 10 pages max
       while (Object.keys(uniqueGames).length < 1000 && page < 100) {
         let response = null;
+        let retryAfter = null;
         let attempts = 0;
         const MAX_ATTEMPTS = 10;
 
@@ -95,7 +96,9 @@ export async function mountGaming(app) {
             attempts++;
 
             const status = err.response?.status;
-            const retryAfter = err.response?.headers?.["retry-after"];
+            retryAfter = err.response?.headers?.["retry-after"]
+              ? parseInt(err.response.headers["retry-after"], 10)
+              : null;
         
             // backoff delay
             const delay = 1000 * attempts;
