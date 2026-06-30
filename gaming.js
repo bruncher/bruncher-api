@@ -95,12 +95,14 @@ export async function mountGaming(app) {
             attempts++;
 
             const status = err.response?.status;
+            const retryAfter = err.response?.headers?.["retry-after"];
         
             // backoff delay
             const delay = 1000 * attempts;
         
             console.warn(
-              `CheapShark error (${status || "no-status"}) for ${currency} page ${page} → retry ${attempts}/${MAX_ATTEMPTS} in ${delay}ms`
+              `CheapShark error (${status || "no-status"}) for ${currency} page ${page} → retry ${attempts}/${MAX_ATTEMPTS} in ${delay}ms` +
+              (retryAfter ? ` | Retry-After: ${retryAfter}s` : "")
             );
         
             if (attempts >= MAX_ATTEMPTS) {
