@@ -1,6 +1,7 @@
 import express from "express";
 import axios from "axios";
 import cors from "cors";
+import { loadCache, saveCache } from "./githubCache.js";
 
 export async function mountGaming(app) {
   const router = express.Router();
@@ -335,6 +336,19 @@ export async function mountGaming(app) {
     }
   
     console.log(`Finished enriching Steam data: ${enrichedCount}/${steamDeals.length} deals`);
+
+    // backup the most recent Steam meta data called to GitHub in case of server restart to reload from there instead of re-polling data
+    try {
+      await saveCache(
+        "steamMetaCache.json",
+        steamMetaCache,
+        `Updated Steam metadata (${Object.keys(steamMetaCache).length} games)`
+      );
+    
+      console.log("💾 Steam metadata saved to GitHub");
+    } catch (err) {
+      console.error("❌ Failed to save Steam metadata:", err.message);
+    }
   }
   
   (async () => {
