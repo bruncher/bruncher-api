@@ -154,6 +154,8 @@ export async function mountGaming(app) {
         }
       
         pagesFetched.push({ page: page + 1, dealsFetched: newDealsThisPage });
+
+        await new Promise(r => setTimeout(r, 250));
       
         page++;
       }
@@ -193,7 +195,9 @@ export async function mountGaming(app) {
   async function preWarm() {
     await loadStores();
      
-    await Promise.all(CURRENCIES.map(currency => fetchDeals(currency, defaultStoreIDs)));
+    for (const currency of CURRENCIES) {
+      await fetchDeals(currency, defaultStoreIDs);
+    }
   }
   
   /**
