@@ -1,7 +1,7 @@
 import express from "express";
 import axios from "axios";
 import cors from "cors";
-import { loadCache, saveCache } from "./githubCache.js";
+import { loadCache, saveCache } from "./cacheStore.js";
 
 export async function mountGaming(app) {
   const router = express.Router();
