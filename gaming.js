@@ -104,7 +104,7 @@ export async function mountGaming(app) {
             );
         
             if (attempts >= MAX_ATTEMPTS) {
-              console.error(`Giving up on ${currency} page ${page}`);
+              console.error(`Max attempts reached on page ${page} of ${currency}`);
               break;
             }
         
@@ -113,7 +113,11 @@ export async function mountGaming(app) {
         }
         
         if (!response) {
-          console.warn(`Skipping ${currency} page ${page} (no response after retries)`);
+          console.warn(`No response after max retries for ${currency} page ${page}`);
+                  
+          console.warn(`⚠️ Cooling down 60s before retrying...`);
+          await new Promise(r => setTimeout(r, 60 * 1000));
+          
           continue;
         }
               
