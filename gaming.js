@@ -75,15 +75,48 @@ export async function mountGaming(app) {
   
       // Keep fetching until we have 100 unique games or 10 pages max
       while (Object.keys(uniqueGames).length < 1000 && page < 100) {
-        const response = await axios.get("https://www.cheapshark.com/api/1.0/deals", {
-          params: {
-            pageSize: 100,
-            pageNumber: page,
-            cc: currency,
-            storeID: storeIDs.join(",")
+        let response = null;
+        let attempts = 0;
+        const MAX_ATTEMPTS = 10;
+
+        while (attempts < MAX_ATTEMPTS) {
+          try {        
+            response = await axios.get("https://www.cheapshark.com/api/1.0/deals", {
+              params: {
+                pageSize: 100,
+                pageNumber: page,
+                cc: currency,
+                storeID: storeIDs.join(",")
+              }
+            });
+
+            break; // success → exit loop
+          } catch (err) {
+            attempts++;
+
+            const status = err.response?.status;
+        
+            // backoff delay
+            const delay = 1000 * attempts;
+        
+            console.warn(
+              `CheapShark error (${status || "no-status"}) for ${currency} page ${page} → retry ${attempts}/${MAX_ATTEMPTS} in ${delay}ms`
+            );
+        
+            if (attempts >= MAX_ATTEMPTS) {
+              console.error(`Giving up on ${currency} page ${page}`);
+              break;
+            }
+        
+            await new Promise(r => setTimeout(r, delay));
           }
-        });
-      
+        }
+        
+        if (!response) {
+          console.warn(`Skipping ${currency} page ${page} (no response after retries)`);
+          continue;
+        }
+              
         let newDealsThisPage = 0;
       
         for (const deal of response.data) {
