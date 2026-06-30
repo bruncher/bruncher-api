@@ -117,8 +117,8 @@ export async function mountGaming(app) {
         if (!response) {
           console.warn(`No response after max retries for ${currency} page ${page}`);
                   
-          console.warn(`⚠️ Cooling down 60s before retrying...`);
-          await new Promise(r => setTimeout(r, 60 * 1000));
+          console.warn(`⚠️ Cooling down ${retryAfter}s before retrying...`);
+          await new Promise(r => setTimeout(r, retryAfter * 1000));
           
           continue;
         }
