@@ -119,9 +119,11 @@ export async function mountGaming(app) {
         
         if (!response) {
           console.warn(`No response after max retries for ${currency} page ${page}`);
+
+          const cooldown = retryAfter ?? 30;
                   
-          console.warn(`⚠️ Cooling down ${retryAfter}s before retrying...`);
-          await new Promise(r => setTimeout(r, retryAfter * 1000));
+          console.warn(`⚠️ Cooling down ${cooldown}s before retrying...`);
+          await new Promise(r => setTimeout(r, cooldown * 1000));
           
           continue;
         }
@@ -398,7 +400,23 @@ export async function mountGaming(app) {
   }
   
   (async () => {
-    console.log("Starting server… loading stores and warming cache…");
+    console.log("Gaming: Starting server…");
+  
+    // Load Steam metadata cache from GitHub
+    try {
+      const saved = await loadCache("steamMetaCache.json");
+  
+      if (saved) {
+        Object.assign(steamMetaCache, saved);
+        console.log(`📥 Loaded ${Object.keys(steamMetaCache).length} Steam metadata entries`);
+      } else {
+        console.log("📥 No saved Steam metadata found.");
+      }
+    } catch (err) {
+      console.error("Failed to load Steam metadata:", err.message);
+    }
+  
+    console.log("Gaming: Loading stores and warming cache...");
   
     await preWarm(); // fetch CheapShark deals
     console.log("Warmup complete.");
