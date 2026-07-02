@@ -565,7 +565,7 @@ router.get("/ping", (req, res) => {
   res.json({ status: "alive", timestamp: new Date().toISOString() });
 });
 
-const MAX_WARMUP_ATTEMPTS = 12; // or 20, or whatever you want
+const MAX_WARMUP_ATTEMPTS = 24; // set to longer than charts preload warmup in case that is slow
 
 // === Startup warm-up ===
 async function warmUp(attempt = 1) {
