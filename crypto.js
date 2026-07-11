@@ -565,35 +565,44 @@ router.get("/ping", (req, res) => {
   res.json({ status: "alive", timestamp: new Date().toISOString() });
 });
 
-const MAX_WARMUP_ATTEMPTS = 24; // set to longer than charts preload warmup in case that is slow
+const MAX_WARMUP_ATTEMPTS = 24; // retry startup warm-up for ~2 minutes
 
 // === Startup warm-up ===
-async function warmUp(attempt = 1) {
-  console.log(`🔄 Warm-up attempt ${attempt}/${MAX_WARMUP_ATTEMPTS}...`);
+async function warmUp() {
+  for (let attempt = 1; attempt <= MAX_WARMUP_ATTEMPTS; attempt++) {
+    console.log(`🔄 Warm-up attempt ${attempt}/${MAX_WARMUP_ATTEMPTS}...`);
 
-  try {
-    await fetchCoinData(true); // force=true, refreshes the price list
-    console.log("✅ Price API warm-up OK");
-  } catch (err) {
-    console.log(`⚠️ Warm-up failed (attempt ${attempt}): ${err?.response?.status || err.message}`);
-    if (attempt < MAX_WARMUP_ATTEMPTS) {
-      console.log("⏳ Retrying warm-up in 60s...");
-      return setTimeout(() => warmUp(attempt + 1), 60000);
-    } else {
-      console.log("❌ Max warm-up attempts reached. Giving up.");
+    try {
+      await fetchCoinData(true); // force=true, refreshes the price list
+      console.log("✅ Price API warm-up OK");
+      return true; // success
+    } catch (err) {
+      console.log(`⚠️ Warm-up failed (attempt ${attempt}): ${err?.response?.status || err.message}`);
+
+      if (attempt < MAX_WARMUP_ATTEMPTS) {
+        console.log("⏳ Retrying warm-up in 5s...");
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
     }
   }
+
+  console.log("❌ Warm-up failed after initial retries. Will rely on background retry.");
+  return false;
 }
 
 async function checkCacheAfterSleep() {
-  const now = Date.now();
-
-  // If cache is empty, trigger warm-up internally
   if (!cache) {
     console.log("⚡ Cache empty — running internal warm-up...");
+
     try {
-      await warmUp();
-      await preloadAllCharts();
+      const success = await warmUp();
+
+      if (success) {
+        await preloadAllCharts();
+      } else {
+        console.log("⚠️ Warm-up still failing, skipping chart preload");
+      }
+
     } catch (err) {
       console.warn("⚠️ Internal warm-up failed:", err.message);
     }
@@ -702,12 +711,17 @@ async function startKeepAlive() {
 // === Start server ===
 export function mountCrypto(app) {
   console.log(`🌐 Public URL: ${process.env.RENDER_EXTERNAL_URL || "https://coingecko-wrapper.onrender.com"}`);
-  console.log("⏳ Waiting 30s before first warm-up...");
+  console.log("⏳ Waiting 5s before first warm-up...");
   setTimeout(async () => {
-    await warmUp();
-    console.log("📈 Starting chart preloads in 10s...");
-    setTimeout(preloadAllCharts, 10000);
-  }, 30000);
+    const success = await warmUp();
+  
+    if (success) {
+      console.log("📈 Starting chart preloads in 5s...");
+      setTimeout(preloadAllCharts, 5000);
+    } else {
+      console.log("⚠️ Skipping chart preload until market warm-up succeeds");
+    }
+  }, 5000);
 
   app.use("/crypto", router);
 };
