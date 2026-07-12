@@ -65,7 +65,7 @@ async function fetchCoinData(force = false) {
         price_change_percentage_24h: coin.price_change_percentage_24h ?? null,
       }));
 
-      lastFetch = now;
+      lastFetch = Date.now();
       console.log(`✅ Fetched ${cache.length} coins successfully`);
     } catch (err) {
       console.error("❌ Error fetching from CoinGecko:", err.message);
@@ -119,7 +119,7 @@ async function throttledFetch(url, params) {
   return axios.get(url, { params, timeout: 20000 });
 }
 
-// === Improved retry logic (20 retries, fast failures, incremental backoff) ===
+// === Improved retry logic (30 retries, fast failures, incremental backoff) ===
 async function fetchWithRetry(url, params, attempt = 1) {
   try {
     const resp = await throttledFetch(url, params);
@@ -207,6 +207,8 @@ router.get("/compare", async (req, res) => {
       return res.json(result.data);
     } catch {
       return res.status(500).json({ error: "Failed to fetch comparison data" });
+    } finally {
+      delete compareLocks[key];
     }
   }
 
@@ -494,11 +496,12 @@ router.get("/flat_single", async (req, res) => {
   }
 });
 
+// not currently used
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// === Improved background retry worker (20 attempts, alignment, no dead coins) ===
+// === Improved background retry worker (30 attempts, alignment, no dead coins) ===
 setInterval(async () => {
   if (retryQueue.length === 0) return;
 
@@ -613,10 +616,12 @@ async function checkCacheAfterSleep() {
 setInterval(() => { checkCacheAfterSleep(); }, 30 * 60 * 1000);
 
 // === Prewarm top compare pairs hourly (staggered and safe) ===
+// not being used now but left in for potential use later
 const TOP_COMPARE_PAIRS = [
   ["bitcoin", "ethereum"],
 ];
 
+// not currently being used by a chart but left in for possible future use
 async function staggeredCompareWarmup() {
   console.log("🔥 Staggered compare warm-up starting...");
 
@@ -627,7 +632,8 @@ async function staggeredCompareWarmup() {
   }
 }
 
-setInterval(staggeredCompareWarmup, 60 * 60 * 1000);
+// remove for now because it's not currently being used by a chart and weighs on API
+//setInterval(staggeredCompareWarmup, 60 * 60 * 1000);
 
 async function preloadChart(coinId) {
   console.log(`🔄 Preloading chart for ${coinId}...`);
@@ -695,6 +701,7 @@ async function preloadAllCharts() {
 }
 
 // === Keep-alive self-ping ===
+// not currently used as it was replaced with more robust action from GitHub
 async function startKeepAlive() {
   const url = process.env.RENDER_EXTERNAL_URL || "https://coingecko-wrapper.onrender.com";
   console.log("🔄 Keep-alive pinger active — every 10 min");
@@ -726,7 +733,7 @@ export function mountCrypto(app) {
   app.use("/crypto", router);
 };
 
-// === Auto-refresh preloaded charts every 12 hours ===
+// === Auto-refresh preloaded charts every 3 hours ===
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 setInterval(() => {
   console.log("⏳ Scheduled 3-hour chart preload starting...");
