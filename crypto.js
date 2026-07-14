@@ -1,7 +1,6 @@
 import express from "express";
 import axios from "axios";
 import cors from "cors";
-import { saveCache, loadCache } from "./cacheStore.js";
 
 const router = express.Router();
 router.use(cors());
@@ -699,54 +698,6 @@ async function preloadAllCharts() {
     await new Promise(r => setTimeout(r, 2500)); // rate-limit safe
   }
   console.log("🟢 Chart preloads completed");
-
-  try {
-      await savePreloadedCharts();
-  } catch (err) {
-      console.warn("⚠️ Failed saving chart cache:", err.message);
-  }
-}
-
-async function savePreloadedCharts() {
-  const data = {};
-
-  for (const coin of PRELOAD_COINS) {
-    const cached = compareCache[`preload_${coin}`];
-
-    if (cached) {
-      data[coin] = cached;
-    }
-  }
-
-  await saveCache(
-    "cryptoPreloadedCharts.json",
-    data,
-    "Update crypto chart cache"
-  );
-
-  console.log("Crypto: 💾 Saved preloaded charts to GitHub");
-}
-
-async function loadPreloadedCharts() {
-    try {
-        const saved = await loadCache("cryptoPreloadedCharts.json");
-
-        if (!saved) {
-            console.log("No saved chart cache");
-            return false;
-        }
-
-        for (const [coin, value] of Object.entries(saved)) {
-            compareCache[`preload_${coin}`] = value;
-        }
-
-        console.log(`📥 Loaded ${Object.keys(saved).length} charts`);
-
-        return true;
-    } catch (err) {
-        console.warn("Couldn't load saved charts:", err.message);
-        return false;
-    }
 }
 
 // === Keep-alive self-ping ===
@@ -766,26 +717,20 @@ async function startKeepAlive() {
 
 // === Start server ===
 export function mountCrypto(app) {
+  console.log(`🌐 Public URL: ${process.env.RENDER_EXTERNAL_URL || "https://coingecko-wrapper.onrender.com"}`);
+  console.log("⏳ Waiting 5s before first warm-up...");
+  setTimeout(async () => {
+    const success = await warmUp();
+  
+    if (success) {
+      console.log("📈 Starting chart preloads in 5s...");
+      setTimeout(preloadAllCharts, 5000);
+    } else {
+      console.log("⚠️ Skipping chart preload until market warm-up succeeds");
+    }
+  }, 5000);
+
   app.use("/crypto", router);
-
-  (async () => {
-
-    const restored = await loadPreloadedCharts();
-  
-    setTimeout(async () => {
-  
-        const success = await warmUp();
-  
-        if (!success)
-            return;
-  
-        if (!restored) {
-            console.log("📈 No saved chart cache, preloading...");
-            preloadAllCharts(); // don't await
-        }
-  
-    }, 5000);
-  })();
 };
 
 // === Auto-refresh preloaded charts every 3 hours ===
