@@ -1,6 +1,7 @@
 import express from "express";
 import axios from "axios";
 import cors from "cors";
+import { loadCache, saveCache } from "./cacheStore.js";
 
 const router = express.Router();
 router.use(cors());
@@ -119,7 +120,7 @@ async function throttledFetch(url, params) {
   return axios.get(url, { params, timeout: 20000 });
 }
 
-// === Improved retry logic (30 retries, fast failures, incremental backoff) ===
+// === Retry logic (50 retries, fast failures, incremental backoff) ===
 async function fetchWithRetry(url, params, attempt = 1) {
   try {
     const resp = await throttledFetch(url, params);
@@ -129,10 +130,10 @@ async function fetchWithRetry(url, params, attempt = 1) {
     const isRateLimit = status === 429;
     const isNetwork = !status; // timeouts, DNS, CG outages
 
-    if ((isRateLimit || isNetwork) && attempt < 30) {
+    if ((isRateLimit || isNetwork) && attempt < 50) {
       const delay = Math.min(500 * attempt, 8000) + Math.random() * 300;
       console.warn(
-        `⚠️ Retry ${attempt}/30 for ${url} after ${delay.toFixed(0)}ms (${status || "network error"})`
+        `⚠️ Retry ${attempt}/50 for ${url} after ${delay.toFixed(0)}ms (${status || "network error"})`
       );
       await new Promise(r => setTimeout(r, delay));
       return fetchWithRetry(url, params, attempt + 1);
@@ -697,7 +698,33 @@ async function preloadAllCharts() {
     await preloadChart(coin);
     await new Promise(r => setTimeout(r, 2500)); // rate-limit safe
   }
-  console.log("🟢 Chart preloads completed");
+  console.log("Crypto: 🟢 Chart preloads completed");
+
+  try {
+    await savePreloadedCharts();
+  } catch (err) {
+    console.warn("Crypto: ⚠️ Failed saving chart cache:", err.message);
+  }
+}
+
+async function savePreloadedCharts() {
+  const data = {};
+
+  for (const coin of PRELOAD_COINS) {
+    const cached = compareCache[`preload_${coin}`];
+
+    if (cached) {
+      data[coin] = cached;
+    }
+  }
+
+  await saveCache(
+    "cryptoPreloadedCharts.json",
+    data,
+    "Update crypto chart cache"
+  );
+
+  console.log(`Crypto: 💾 Saved ${Object.keys(data).length} preloaded charts`);
 }
 
 // === Keep-alive self-ping ===
