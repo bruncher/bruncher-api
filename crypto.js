@@ -661,7 +661,17 @@ async function preloadChart(coinId) {
     return data;
   } catch (err) {
     const status = err.response?.status;
+
     console.warn(`⚠️ Failed to preload ${coinId}: ${err.message}`);
+    
+    if (err.response) {
+      console.warn(`[${coinId}] status:`, err.response.status);
+      console.warn(`[${coinId}] statusText:`, err.response.statusText);
+      console.warn(`[${coinId}] headers:`, err.response.headers);
+    } else {
+      console.warn(`[${coinId}] code:`, err.code);
+      console.warn(`[${coinId}] message:`, err.message);
+    }
 
     // === 404 fallback: use "days=max" ===
     if (status === 404) {
@@ -727,6 +737,41 @@ async function savePreloadedCharts() {
   console.log(`Crypto: 💾 Saved ${Object.keys(data).length} preloaded charts`);
 }
 
+async function loadPreloadedCharts() {
+  try {
+    const data = await loadCache("cryptoPreloadedCharts.json");
+
+    if (!data) {
+      console.log("Crypto: 📂 No saved chart cache found");
+      return false;
+    }
+
+    let count = 0;
+
+    for (const [coin, cached] of Object.entries(data)) {
+      if (
+        cached &&
+        cached.data &&
+        Array.isArray(cached.data.prices) &&
+        cached.data.prices.length > 0
+    ) {
+        compareCache[`preload_${coin}`] = cached;
+        console.log(`📂 Loaded ${coin}: ${cached.data.prices.length} points`);
+        count++;
+      } else {
+          console.warn(`⚠️ Invalid cache for ${coin}`);
+      }
+    }
+
+    console.log(`Crypto: 📂 Loaded ${count} preloaded charts from GitHub`);
+
+    return true;
+  } catch (err) {
+    console.warn("Crypto: ❌ Failed loading chart cache:", err.message);
+    return false;
+  }
+}
+
 // === Keep-alive self-ping ===
 // not currently used as it was replaced with more robust action from GitHub
 async function startKeepAlive() {
@@ -747,11 +792,17 @@ export function mountCrypto(app) {
   console.log(`🌐 Public URL: ${process.env.RENDER_EXTERNAL_URL || "https://coingecko-wrapper.onrender.com"}`);
   console.log("⏳ Waiting 5s before first warm-up...");
   setTimeout(async () => {
+    const loaded = await loadPreloadedCharts();
+    
     const success = await warmUp();
   
     if (success) {
-      console.log("📈 Starting chart preloads in 5s...");
-      setTimeout(preloadAllCharts, 5000);
+      if (!loaded) {
+        console.log("📈 No saved charts found. Starting chart preload in 5s...");
+        setTimeout(preloadAllCharts, 5000);
+      } else {
+        console.log("📂 Using restored chart cache");
+      }
     } else {
       console.log("⚠️ Skipping chart preload until market warm-up succeeds");
     }
