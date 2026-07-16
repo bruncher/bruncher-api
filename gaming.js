@@ -212,10 +212,21 @@ export async function mountGaming(app) {
   }
   
   /**
-   * Set up hourly update for USD and CAD
+   * Set up hourly update for all currencies (USD and CAD), and enrich with steam data
    */
-  setInterval(() => {
-    CURRENCIES.forEach(currency => fetchDeals(currency, defaultStoreIDs));
+  setInterval(async () => {
+    for (const currency of CURRENCIES) {
+      await fetchDeals(currency, defaultStoreIDs);
+    }
+  
+    const combined = [
+      ...(cache["USD"]?.data || []),
+      ...(cache["CAD"]?.data || [])
+    ];
+  
+    enrichWithSteamData(combined)
+      .catch(err => console.error("Hourly Steam enrichment failed:", err));
+  
   }, CACHE_TTL);
   
   // Global cache for Steam metadata
@@ -442,16 +453,17 @@ export async function mountGaming(app) {
   // ==========================
   // Run enrichment once per day
   // ==========================
-  setInterval(() => {
-    const combined = [
-      ...(cache["USD"]?.data || []),
-      ...(cache["CAD"]?.data || [])
-    ];
+  // blocking for now because we are enriching during the hourly deals check since the steam meta update should be fast now
+  //setInterval(() => {
+   // const combined = [
+   //   ...(cache["USD"]?.data || []),
+    //  ...(cache["CAD"]?.data || [])
+    //];
   
-    if (combined.length > 0) {
-      enrichWithSteamData(combined).catch(console.error);
-    }
-  }, 24 * 60 * 60 * 1000); // daily
+    //if (combined.length > 0) {
+      //enrichWithSteamData(combined).catch(console.error);
+    //}
+  //}, 24 * 60 * 60 * 1000); // daily
 
   console.log("🕹️ gaming API mounted");
 }
