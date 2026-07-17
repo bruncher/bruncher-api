@@ -201,6 +201,21 @@ export async function mountGaming(app) {
       
       // Atomic swap — ensures no partial metadata window
       cache[currency] = newBlock;
+
+      try {
+        await saveCache(
+          "gamingDealsCache.json",
+          cache,
+          `Updated gaming deals cache (${uniqueDeals.length} deals)`
+        );
+      
+        console.log(
+          `💾 Gaming deals saved: ${uniqueDeals.length} deals (${getObjectSizeKB(cache)} KB)`
+        );
+      
+      } catch (err) {
+        console.error("❌ Failed to save gaming deals:", err.message);
+      }
   
       //console.log(`Pages fetched:`, pagesFetched); // doing log per page found instead
 
