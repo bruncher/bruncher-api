@@ -403,13 +403,33 @@ export async function mountGaming(app) {
 
     // backup the most recent Steam meta data called to GitHub in case of server restart to reload from there instead of re-polling data
     try {
+      const steamCount = Object.keys(steamMetaCache).length;
+      
       await saveCache(
         "steamMetaCache.json",
         steamMetaCache,
-        `Updated Steam metadata (${Object.keys(steamMetaCache).length} games)`
+        `Updated Steam metadata (${steamCount} games)`
       );
-    
-      console.log("💾 Steam metadata saved to GitHub");
+      
+      console.log(`💾 Steam metadata saved to GitHub: ${steamCount} games`);
+      
+      const genreCounts = {};
+      
+      for (const game of Object.values(steamMetaCache)) {
+        if (!game?.genres) continue;
+      
+        for (const genre of game.genres) {
+          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+        }
+      }
+      
+      console.log(
+        "🎮 Genre tags:",
+        Object.entries(genreCounts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([genre, count]) => `${genre}: ${count}`)
+          .join(", ")
+      );
     } catch (err) {
       console.error("❌ Failed to save Steam metadata:", err.message);
     }
@@ -424,7 +444,7 @@ export async function mountGaming(app) {
   
       if (saved) {
         Object.assign(steamMetaCache, saved);
-        console.log(`📥 Loaded ${Object.keys(steamMetaCache).length} Steam metadata entries`);
+        console.log(`📥 Loaded Steam metadata cache: ${Object.keys(steamMetaCache).length} games`);
       } else {
         console.log("📥 No saved Steam metadata found.");
       }
