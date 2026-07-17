@@ -251,7 +251,7 @@ export async function mountGaming(app) {
       }
     }
   
-    console.log(`🎮 ${prefix} Steam metadata: ${games.length} games`);
+    console.log(`🎮 ${prefix} Genre Summary`);
   
     if (Object.keys(genreCounts).length > 0) {
       console.table(
@@ -263,6 +263,11 @@ export async function mountGaming(app) {
           }))
       );
     }
+  }
+
+  function getObjectSizeKB(obj) {
+    const bytes = Buffer.byteLength(JSON.stringify(obj), "utf8");
+    return (bytes / 1024).toFixed(1);
   }
   
   /**
@@ -436,7 +441,9 @@ export async function mountGaming(app) {
         `Updated Steam metadata (${steamCount} games)`
       );
       
-      console.log(`💾 Steam metadata saved to GitHub: ${steamCount} games`);
+      console.log(
+        `💾 Steam metadata saved to GitHub: ${steamCount} games (${getObjectSizeKB(steamMetaCache)} KB)`
+      );
       
       logSteamMetaSummary("Saved");
       
@@ -454,6 +461,10 @@ export async function mountGaming(app) {
   
       if (saved) {
         Object.assign(steamMetaCache, saved);
+
+        console.log(
+          `📥 Loaded Steam metadata cache: ${Object.keys(steamMetaCache).length} games (${getObjectSizeKB(steamMetaCache)} KB)`
+        );
         logSteamMetaSummary("Loaded");
       } else {
         console.log("📥 No saved Steam metadata found.");
