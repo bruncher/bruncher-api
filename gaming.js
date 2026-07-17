@@ -231,6 +231,18 @@ export async function mountGaming(app) {
    */
   async function preWarm() {
     await loadStores();
+
+    const lastUpdate = cache.USD?.timestamp || 0;
+    const age = Date.now() - lastUpdate;
+    
+    console.log(
+      `Gaming deals cache age: ${(age / 1000 / 60).toFixed(1)} minutes`
+    );
+
+    if (cache.USD && age < CACHE_TTL) {
+      console.log("Gaming cache still fresh. Skipping refresh.");
+      return;
+    }
      
     for (const currency of CURRENCIES) {
       await fetchDeals(currency, defaultStoreIDs);
@@ -486,6 +498,26 @@ export async function mountGaming(app) {
       }
     } catch (err) {
       console.error("Failed to load Steam metadata:", err.message);
+    }
+
+    // load deals from cache
+    try {
+      const savedDeals = await loadCache("gamingDealsCache.json");
+    
+      if (savedDeals) {
+        cache = savedDeals;
+    
+        const usdCount = cache.USD?.data?.length || 0;
+    
+        console.log(
+          `📥 Loaded gaming deals cache: ${usdCount} deals (${getObjectSizeKB(cache)} KB)`
+        );
+      } else {
+        console.log("📥 No saved gaming deals found.");
+      }
+    
+    } catch (err) {
+      console.error("Failed to load gaming deals:", err.message);
     }
   
     console.log("Gaming: Loading stores and warming cache...");
