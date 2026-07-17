@@ -21,7 +21,7 @@ export async function mountGaming(app) {
   // In-memory cache per currency
   let cache = {};
   const CACHE_TTL = 1000 * 60 * 60; // 1 hour
-  const CURRENCIES = ["USD", "CAD"];
+  const CURRENCIES = ["USD"]; // CheapShark deals are only available in USD
   const DEFAULT_STORES = ["steam", "humble store", "fanatical"].map(s => s.toLowerCase().trim());
   
   const STORE_PRIORITY = {
@@ -201,7 +201,7 @@ export async function mountGaming(app) {
   }
   
   /**
-   * Pre-warm USD and CAD on startup
+   * Pre-warm USD on startup
    */
   async function preWarm() {
     await loadStores();
@@ -212,19 +212,14 @@ export async function mountGaming(app) {
   }
   
   /**
-   * Set up hourly update for all currencies (USD and CAD), and enrich with steam data
+   * Set up hourly update for all currencies (USD only), and enrich with steam data
    */
   setInterval(async () => {
     for (const currency of CURRENCIES) {
       await fetchDeals(currency, defaultStoreIDs);
     }
   
-    const combined = [
-      ...(cache["USD"]?.data || []),
-      ...(cache["CAD"]?.data || [])
-    ];
-  
-    enrichWithSteamData(combined)
+    enrichWithSteamData(cache["USD"]?.data || [])
       .catch(err => console.error("Hourly Steam enrichment failed:", err));
   
   }, CACHE_TTL);
@@ -234,7 +229,7 @@ export async function mountGaming(app) {
   
   /**
    * GET /deals
-   * Optional query: ?currency=USD or CAD
+   * Optional query: ?currency=USD
    */
   router.get("/deals", async (req, res) => {
     try {
@@ -268,7 +263,6 @@ export async function mountGaming(app) {
   router.get("/debug/cache", (req, res) => {
     res.json({
       usd: cache.USD?.data.length || 0,
-      cad: cache.CAD?.data.length || 0,
       steamMetaCount: Object.keys(steamMetaCache).length
     });
   });
@@ -348,7 +342,7 @@ export async function mountGaming(app) {
       
           steamMetaCache[id] = deal.steamMeta;
   
-          // Also update current deals inside both USD and CAD caches
+          // Also update current deals inside USD cache
           for (const currency of CURRENCIES) {
             const cur = cache[currency];
             if (!cur || !cur.data) continue;
@@ -433,10 +427,8 @@ export async function mountGaming(app) {
     console.log("Warmup complete.");
     
     // Start Steam enrichment asynchronously (does NOT block server start)
-    const allDeals = [
-      ...(cache["USD"]?.data || []),
-      ...(cache["CAD"]?.data || [])
-    ];
+    const allDeals = cache["USD"]?.data || [];
+    
     if (allDeals.length > 0) {
       enrichWithSteamData(allDeals).catch(err => console.error("Initial Steam enrichment failed:", err));
     }
@@ -444,8 +436,10 @@ export async function mountGaming(app) {
     // Periodic status update
     setInterval(() => {
       const usdCount = cache.USD?.data.length || 0;
-      const cadCount = cache.CAD?.data.length || 0;
-      console.log(`Status update: USD deals ${usdCount}, CAD deals ${cadCount}, Steam cache ${Object.keys(steamMetaCache).length}`);
+      
+      console.log(
+        `Status update: USD deals ${usdCount}, Steam cache ${Object.keys(steamMetaCache).length}`
+      );
     }, 60 * 60 * 1000); // every hour
   
   })();
