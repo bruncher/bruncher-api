@@ -237,6 +237,33 @@ export async function mountGaming(app) {
   
   // Global cache for Steam metadata
   const steamMetaCache = {};
+
+  function logSteamMetaSummary(prefix = "") {
+    const games = Object.values(steamMetaCache);
+  
+    const genreCounts = {};
+  
+    for (const game of games) {
+      if (!game?.genres) continue;
+  
+      for (const genre of game.genres) {
+        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+      }
+    }
+  
+    console.log(`🎮 ${prefix} Steam metadata: ${games.length} games`);
+  
+    if (Object.keys(genreCounts).length > 0) {
+      console.table(
+        Object.entries(genreCounts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([genre, count]) => ({
+            Genre: genre,
+            Games: count
+          }))
+      );
+    }
+  }
   
   /**
    * GET /deals
@@ -316,9 +343,7 @@ export async function mountGaming(app) {
       if (steamMetaCache[id] !== undefined && steamMetaCache[id] !== null) {
         deal.steamMeta = steamMetaCache[id];
         enrichedCount++;
-        if (enrichedCount % 5 === 0 || enrichedCount === steamDeals.length) {
-          console.log(`Enriched Steam metadata (cached): ${enrichedCount}/${steamDeals.length}`);
-        }
+
         continue;
       }
   
@@ -413,23 +438,8 @@ export async function mountGaming(app) {
       
       console.log(`💾 Steam metadata saved to GitHub: ${steamCount} games`);
       
-      const genreCounts = {};
+      logSteamMetaSummary("Saved");
       
-      for (const game of Object.values(steamMetaCache)) {
-        if (!game?.genres) continue;
-      
-        for (const genre of game.genres) {
-          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-        }
-      }
-      
-      console.log(
-        "🎮 Genre tags:",
-        Object.entries(genreCounts)
-          .sort((a, b) => b[1] - a[1])
-          .map(([genre, count]) => `${genre}: ${count}`)
-          .join(", ")
-      );
     } catch (err) {
       console.error("❌ Failed to save Steam metadata:", err.message);
     }
@@ -444,7 +454,7 @@ export async function mountGaming(app) {
   
       if (saved) {
         Object.assign(steamMetaCache, saved);
-        console.log(`📥 Loaded Steam metadata cache: ${Object.keys(steamMetaCache).length} games`);
+        logSteamMetaSummary("Loaded");
       } else {
         console.log("📥 No saved Steam metadata found.");
       }
