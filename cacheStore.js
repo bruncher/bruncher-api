@@ -18,13 +18,21 @@ function headers() {
 
 export async function loadCache(filePath) {
   try {
-    const res = await axios.get(
+    const meta = await axios.get(
       `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`,
       { headers: headers() }
     );
 
-    const json = Buffer.from(res.data.content, "base64").toString("utf-8");
-    return JSON.parse(json);
+    // Large files should use raw download URL
+    if (meta.data.download_url) {
+      const res = await axios.get(meta.data.download_url, {
+        responseType: "json"
+      });
+      return res.data;
+    }
+
+    return null;
+
   } catch (err) {
     if (err.response?.status === 404) return null;
     throw err;
