@@ -71,10 +71,16 @@ export async function mountGaming(app) {
     try {
       let page = 0;
       const uniqueGames = {};
-      const pagesFetched = [];
+      //const pagesFetched = []; // not being used now
   
-      // Keep fetching until we have 100 unique games or 10 pages max
-      while (Object.keys(uniqueGames).length < 1000 && page < 100) {
+      // Keep fetching until we have target number unique games or reach max pages
+      const TARGET_UNIQUE_DEALS = 2000;
+      const MAX_DEAL_PAGES = 100;
+      
+      while (
+        Object.keys(uniqueGames).length < TARGET_UNIQUE_DEALS &&
+        page < MAX_DEAL_PAGES
+      ) {
         let response = null;
         let retryAfter = null;
         let attempts = 0;
@@ -164,14 +170,18 @@ export async function mountGaming(app) {
           }
         }
       
-        pagesFetched.push({ page: page + 1, dealsFetched: newDealsThisPage });
+        //pagesFetched.push({ page: page + 1, dealsFetched: newDealsThisPage });  // log after each page instead
+
+        console.log(
+          `Page ${page + 1}: +${newDealsThisPage} unique (${Object.keys(uniqueGames).length}/${TARGET_UNIQUE_DEALS})`
+        );
 
         await new Promise(r => setTimeout(r, 250));
       
         page++;
       }
   
-      // Convert to array and trim to exactly 100 unique games (safety)
+      // Convert collected unique games into an array
       const uniqueDeals = Object.values(uniqueGames);
   
       // Reattach previously cached Steam metadata
@@ -192,8 +202,9 @@ export async function mountGaming(app) {
       // Atomic swap — ensures no partial metadata window
       cache[currency] = newBlock;
   
+      //console.log(`Pages fetched:`, pagesFetched); // doing log per page found instead
+
       console.log(`Cache updated for ${currency} with ${uniqueDeals.length} unique deals`);
-      console.log(`Pages fetched:`, pagesFetched);
   
     } catch (err) {
       console.error(`Error fetching deals for ${currency}:`, err.message);
