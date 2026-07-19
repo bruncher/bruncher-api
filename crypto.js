@@ -104,11 +104,16 @@ router.get("/", (req, res) => {
 router.get("/prices", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 250;
-    const data = await fetchCoinData();
-    res.json(data.slice(0, limit));
+
+    if (!cache) {
+      return res.status(200).json([]);
+    }
+
+    res.json(cache.slice(0, limit));
+
   } catch (err) {
     console.error("❌ API Error:", err.message);
-    res.status(200).json(cache || { error: "Temporarily unavailable" });
+    res.status(200).json(cache || []);
   }
 });
 
@@ -833,13 +838,15 @@ export function mountCrypto(app) {
   app.use("/crypto", router);
 };
 
-// === Auto-refresh preloaded charts every 3 hours ===
+// === Auto-refresh preloaded charts + 250 coins every 3 hours ===
 setInterval(async () => {
   console.log("⏳ Scheduled 3-hour chart preload starting...");
+  
+  await fetchCoinData();
   await preloadAllCharts();
 
   console.log(
-    `⏰ Next crypto chart refresh: ${new Date(Date.now() + THREE_HOURS).toLocaleString("en-CA", {
+    `⏰ Next crypto refresh: ${new Date(Date.now() + THREE_HOURS).toLocaleString("en-CA", {
       timeZone: "America/Toronto"
     })}`
   );
