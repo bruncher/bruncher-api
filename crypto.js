@@ -20,7 +20,7 @@ function toLookerTimestamp(ts) {
 // === Cache + timing ===
 let cache = null;
 let lastFetch = 0;
-let fetchPromise = null;
+//let fetchPromise = null;
 const CACHE_DURATION = 15 * 60 * 1000; // 15 min
 const COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets";
 const THREE_HOURS = 3 * 60 * 60 * 1000;
@@ -36,12 +36,13 @@ async function fetchCoinData(force = false, attempt = 1) {
   }
 
   // Avoid concurrent fetches
-  if (fetchPromise) {
-    console.log("🕓 Waiting for ongoing fetch...");
-    return fetchPromise;
-  }
+  //if (fetchPromise) {
+  //  console.log("🕓 Waiting for ongoing fetch...");
+  //  return fetchPromise;
+  //}
 
-  fetchPromise = (async () => {
+  //fetchPromise = (async () => {
+  return (async () => {
     console.log(`🧩 fetchCoinData(force=${force}) — last fetch ${((now - lastFetch) / 1000).toFixed(1)}s ago`);
     try {
       console.log("🌍 Fetching data from CoinGecko API...");
@@ -92,14 +93,14 @@ async function fetchCoinData(force = false, attempt = 1) {
         console.log("⚠️ No cache available — retry will handle it");
         throw err;
       }
-    } finally {
-      fetchPromise = null;
-    }
+    } //finally {
+      //fetchPromise = null;
+    //}
 
     return cache;
   })();
 
-  return fetchPromise;
+  //return fetchPromise;
 }
 
 // === API routes ===
