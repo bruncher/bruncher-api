@@ -23,6 +23,7 @@ let lastFetch = 0;
 let fetchPromise = null;
 const CACHE_DURATION = 15 * 60 * 1000; // 15 min
 const COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets";
+const THREE_HOURS = 3 * 60 * 60 * 1000;
 
 // === Fetch logic ===
 async function fetchCoinData(force = false) {
@@ -808,12 +809,23 @@ export function mountCrypto(app) {
     }
   }, 5000);
 
+  console.log(
+    `⏰ Next crypto chart refresh: ${new Date(Date.now() + THREE_HOURS).toLocaleString("en-CA", {
+      timeZone: "America/Toronto"
+    })}`
+  );
+
   app.use("/crypto", router);
 };
 
 // === Auto-refresh preloaded charts every 3 hours ===
-const THREE_HOURS = 3 * 60 * 60 * 1000;
-setInterval(() => {
+setInterval(async () => {
   console.log("⏳ Scheduled 3-hour chart preload starting...");
-  preloadAllCharts();
+  await preloadAllCharts();
+
+  console.log(
+    `⏰ Next crypto chart refresh: ${new Date(Date.now() + THREE_HOURS).toLocaleString("en-CA", {
+      timeZone: "America/Toronto"
+    })}`
+  );
 }, THREE_HOURS);
