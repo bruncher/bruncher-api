@@ -70,7 +70,16 @@ async function fetchCoinData(force = false) {
       lastFetch = Date.now();
       console.log(`✅ Fetched ${cache.length} coins successfully`);
     } catch (err) {
+      const status = err.response?.status;
+    
+      if (status === 429) {
+        console.error("🚫 CoinGecko returned HTTP 429");
+        console.log("📋 Headers:");
+        console.dir(err.response.headers, { depth: null });
+      }
+    
       console.error("❌ Error fetching from CoinGecko:", err.message);
+    
       if (cache) {
         console.log("⚠️ Returning stale cache data");
       } else {
