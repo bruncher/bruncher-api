@@ -159,11 +159,21 @@ async function fetchWithRetry(url, params, attempt = 1) {
     const isNetwork = !status; // timeouts, DNS, CG outages
 
     if ((isRateLimit || isNetwork) && attempt < 50) {
-      const delay = Math.min(500 * attempt, 8000) + Math.random() * 300;
+
+      let delay;
+    
+      if (isRateLimit && err.response?.headers?.["retry-after"]) {
+        delay = Number(err.response.headers["retry-after"]) * 1000;
+      } else {
+        delay = Math.min(500 * attempt, 8000) + Math.random() * 300;
+      }
+    
       console.warn(
-        `⚠️ Retry ${attempt}/50 for ${url} after ${delay.toFixed(0)}ms (${status || "network error"})`
+        `⚠️ Retry ${attempt}/50 for ${url} after ${(delay / 1000).toFixed(1)}s (${status || "network error"})`
       );
+    
       await new Promise(r => setTimeout(r, delay));
+    
       return fetchWithRetry(url, params, attempt + 1);
     }
 
