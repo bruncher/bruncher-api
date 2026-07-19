@@ -26,7 +26,7 @@ const COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets";
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 
 // === Fetch logic ===
-async function fetchCoinData(force = false) {
+async function fetchCoinData(force = false, attempt = 1) {
   const now = Date.now();
 
   // Serve from cache if recent enough
@@ -72,10 +72,16 @@ async function fetchCoinData(force = false) {
     } catch (err) {
       const status = err.response?.status;
     
-      if (status === 429) {
-        const retryAfter = err.response?.headers?.["retry-after"];
+      if (status === 429 && attempt < 24) {
+        const retryAfter = Number(err.response?.headers?.["retry-after"]) || 5;
       
-        console.error(`🚫 CoinGecko returned HTTP 429 (retry-after: ${retryAfter || "unknown"}s)`);
+        console.error(`🚫 CoinGecko returned HTTP 429. Retrying after ${retryAfter}s... (attempt ${attempt}/24)`);
+      
+        await new Promise(resolve =>
+          setTimeout(resolve, retryAfter * 1000)
+        );
+      
+        return fetchCoinData(force, attempt + 1);
       }
     
       console.error("❌ Error fetching from CoinGecko:", err.message);
