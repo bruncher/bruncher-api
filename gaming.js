@@ -257,10 +257,15 @@ export async function mountGaming(app) {
       await fetchDeals(currency, defaultStoreIDs);
     }
   
-    enrichWithSteamData(cache["USD"]?.data || [])
+    await enrichWithSteamData(cache["USD"]?.data || [])
       .catch(err => console.error("Hourly Steam enrichment failed:", err));
-  
+
+    console.log(
+      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString()}`
+    );
+    
   }, CACHE_TTL);
+
   
   // Global cache for Steam metadata
   const steamMetaCache = {};
