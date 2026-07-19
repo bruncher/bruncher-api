@@ -594,8 +594,13 @@ async function warmUp() {
       console.log(`⚠️ Warm-up failed (attempt ${attempt}): ${err?.response?.status || err.message}`);
 
       if (attempt < MAX_WARMUP_ATTEMPTS) {
-        console.log("⏳ Retrying warm-up in 5s...");
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        const retryAfter = err.retryAfter || 5;
+
+        console.log(`⏳ Retrying after ${retryAfter}s...`);
+        
+        await new Promise(resolve =>
+          setTimeout(resolve, retryAfter * 1000)
+        );
       }
     }
   }
