@@ -43,7 +43,9 @@ async function fetchCoinData(force = false, attempt = 1) {
 
   //fetchPromise = (async () => {
   return (async () => {
-    console.log(`🧩 fetchCoinData(force=${force}) — last fetch ${((now - lastFetch) / 1000).toFixed(1)}s ago`);
+    const age = lastFetch ? `${((now - lastFetch) / 1000).toFixed(1)}s ago` : "never";
+
+    console.log(`🧩 fetchCoinData(force=${force}) — last fetch ${age}`);
     try {
       console.log("🌍 Fetching data from CoinGecko API...");
       const response = await axios.get(COINGECKO_URL, {
