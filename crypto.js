@@ -807,13 +807,13 @@ export function mountCrypto(app) {
     } else {
       console.log("⚠️ Skipping chart preload until market warm-up succeeds");
     }
-  }, 5000);
 
-  console.log(
-    `⏰ Next crypto chart refresh: ${new Date(Date.now() + THREE_HOURS).toLocaleString("en-CA", {
-      timeZone: "America/Toronto"
-    })}`
-  );
+    console.log(
+      `⏰ Next crypto chart refresh: ${new Date(Date.now() + THREE_HOURS).toLocaleString("en-CA", {
+        timeZone: "America/Toronto"
+      })}`
+    );
+  }, 5000);
 
   app.use("/crypto", router);
 };
