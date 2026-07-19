@@ -73,9 +73,9 @@ async function fetchCoinData(force = false) {
       const status = err.response?.status;
     
       if (status === 429) {
-        console.error("🚫 CoinGecko returned HTTP 429");
-        console.log("📋 Headers:");
-        console.dir(err.response.headers, { depth: null });
+        const retryAfter = err.response?.headers?.["retry-after"];
+      
+        console.error(`🚫 CoinGecko returned HTTP 429 (retry-after: ${retryAfter || "unknown"}s)`);
       }
     
       console.error("❌ Error fetching from CoinGecko:", err.message);
