@@ -530,21 +530,26 @@ export async function mountGaming(app) {
     await preWarm(); // fetch CheapShark deals
     console.log("Warmup complete.");
     
-    // Start Steam enrichment asynchronously (does NOT block server start)
+    // Start Steam enrichment after cache warmup
     const allDeals = cache["USD"]?.data || [];
     
     if (allDeals.length > 0) {
-      enrichWithSteamData(allDeals).catch(err => console.error("Initial Steam enrichment failed:", err));
+      await enrichWithSteamData(allDeals)
+        .catch(err => console.error("Initial Steam enrichment failed:", err));
     }
     
-    // Periodic status update
-    setInterval(() => {
-      const usdCount = cache.USD?.data.length || 0;
+    console.log(
+      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString()}`
+    );
+    
+    // Periodic status update -- hide for now because it seems redundant as the refreshes log things as well
+    //setInterval(() => {
+    //  const usdCount = cache.USD?.data.length || 0;
       
-      console.log(
-        `Status update: USD deals ${usdCount}, Steam cache ${Object.keys(steamMetaCache).length}`
-      );
-    }, 60 * 60 * 1000); // every hour
+    //  console.log(
+    //    `Status update: USD deals ${usdCount}, Steam cache ${Object.keys(steamMetaCache).length}`
+    //  );
+    //}, 60 * 60 * 1000); // every hour
   
   })();
   
