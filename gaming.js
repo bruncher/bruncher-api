@@ -261,7 +261,9 @@ export async function mountGaming(app) {
       .catch(err => console.error("Hourly Steam enrichment failed:", err));
 
     console.log(
-      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString()}`
+      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString("en-CA", {
+        timeZone: "America/Toronto"
+      })}`
     );
     
   }, CACHE_TTL);
@@ -539,7 +541,9 @@ export async function mountGaming(app) {
     }
     
     console.log(
-      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString()}`
+      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString("en-CA", {
+        timeZone: "America/Toronto"
+      })}`
     );
     
     // Periodic status update -- hide for now because it seems redundant as the refreshes log things as well
