@@ -594,8 +594,9 @@ async function warmUp() {
       console.log(`⚠️ Warm-up failed (attempt ${attempt}): ${err?.response?.status || err.message}`);
 
       if (attempt < MAX_WARMUP_ATTEMPTS) {
-        const retryAfter = err.retryAfter || 5;
-
+        const retryAfter =
+          Number(err.response?.headers?.["retry-after"]) || 5;
+        
         console.log(`⏳ Retrying after ${retryAfter}s...`);
         
         await new Promise(resolve =>
