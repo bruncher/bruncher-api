@@ -21,6 +21,8 @@ export async function mountGaming(app) {
   // In-memory cache per currency
   let cache = {};
   const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+  const ERROR_TTL = 1000 * 60 * 60 * 3; // 3 hours
+  let gamingRefreshTTL = CACHE_TTL;
   const CURRENCIES = ["USD"]; // CheapShark deals are only available in USD
   
   //const DEFAULT_STORES = ["steam", "humble store", "fanatical"].map(s => s.toLowerCase().trim());
@@ -199,9 +201,9 @@ export async function mountGaming(app) {
             const status = err.response?.status;
 
             if (status === 403) {
-              console.error("CheapShark returned 403. Bot protection detected. Aborting refresh.");
+              console.error("CheapShark returned 403, aborting refresh.");
             
-              // Don't retry this page
+              gamingRefreshTTL = ERROR_TTL;
               return;
             }
             
@@ -325,6 +327,8 @@ export async function mountGaming(app) {
       //console.log(`Pages fetched:`, pagesFetched); // doing log per page found instead
 
       console.log(`Cache updated for ${currency} with ${uniqueDeals.length} unique deals`);
+
+      gamingRefreshTTL = CACHE_TTL;
   
     } catch (err) {
       console.error(`Error fetching deals for ${currency}:`, err.message);
@@ -359,22 +363,44 @@ export async function mountGaming(app) {
   /**
    * Set up hourly update for all currencies (USD only), and enrich with steam data
    */
-  setInterval(async () => {
-    for (const currency of CURRENCIES) {
-      await fetchDeals(currency, defaultStoreIDs);
-    }
+  //setInterval(async () => {
+  //  for (const currency of CURRENCIES) {
+  //    await fetchDeals(currency, defaultStoreIDs);
+  //  }
   
-    await enrichWithSteamData(cache["USD"]?.data || [])
-      .catch(err => console.error("Hourly Steam enrichment failed:", err));
+  //  await enrichWithSteamData(cache["USD"]?.data || [])
+  //    .catch(err => console.error("Hourly Steam enrichment failed:", err));
 
-    console.log(
-      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString("en-CA", {
-        timeZone: "America/Toronto"
-      })}`
-    );
+  //  console.log(
+  //    `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString("en-CA", {
+  //      timeZone: "America/Toronto"
+  //    })}`
+  //  );
     
-  }, CACHE_TTL);
+  //}, gamingRefreshTTL);
 
+  function scheduleGamingRefresh() {
+    setTimeout(async () => {
+  
+      for (const currency of CURRENCIES) {
+        await fetchDeals(currency, defaultStoreIDs);
+      }
+  
+      await enrichWithSteamData(cache["USD"]?.data || [])
+        .catch(err => console.error("Hourly Steam enrichment failed:", err));
+  
+      console.log(
+        `⏰ Next gaming refresh: ${new Date(Date.now() + gamingRefreshTTL).toLocaleString("en-CA", {
+          timeZone: "America/Toronto"
+        })}`
+      );
+  
+      scheduleGamingRefresh();
+  
+    }, gamingRefreshTTL);
+  }
+  
+  scheduleGamingRefresh();
   
   // Global cache for Steam metadata
   const steamMetaCache = {};
@@ -648,7 +674,7 @@ export async function mountGaming(app) {
     }
     
     console.log(
-      `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString("en-CA", {
+      `⏰ Next gaming refresh: ${new Date(Date.now() + gamingRefreshTTL).toLocaleString("en-CA", {
         timeZone: "America/Toronto"
       })}`
     );
