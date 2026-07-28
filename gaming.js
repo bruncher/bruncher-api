@@ -35,22 +35,80 @@ export async function mountGaming(app) {
   /**
    * Load storeID -> storeName map
    */
-  async function loadStores() {
-    try {
-      const res = await axios.get("https://www.cheapshark.com/api/1.0/stores");
-      storeMap = Object.fromEntries(
-        res.data.map(s => [s.storeID, s.storeName.toLowerCase().trim()])
-      );
-      console.log("Store map loaded:", Object.keys(storeMap).length, "stores");
+  //async function loadStores() {
+  //  try {
+  //    const res = await axios.get("https://www.cheapshark.com/api/1.0/stores");
+  //    storeMap = Object.fromEntries(
+  //      res.data.map(s => [s.storeID, s.storeName.toLowerCase().trim()])
+  //    );
+  //    console.log("Store map loaded:", Object.keys(storeMap).length, "stores");
   
-      defaultStoreIDs = Object.entries(storeMap)
-        .filter(([id, name]) => DEFAULT_STORES.includes(name))
-        .map(([id]) => id);
+  //    defaultStoreIDs = Object.entries(storeMap)
+  //      .filter(([id, name]) => DEFAULT_STORES.includes(name))
+  //      .map(([id]) => id);
       
-      console.log("Default store IDs:", defaultStoreIDs);
+  //    console.log("Default store IDs:", defaultStoreIDs);
   
-    } catch (err) {
-      console.error("Error loading stores:", err.message);
+  //  } catch (err) {
+  //    console.error("Error loading stores:", err.message);
+  //  }
+  //}
+
+  async function loadStores() {
+    const MAX_ATTEMPTS = 50;
+  
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const res = await axios.get("https://www.cheapshark.com/api/1.0/stores");
+  
+        storeMap = Object.fromEntries(
+          res.data.map(s => [
+            s.storeID,
+            s.storeName.toLowerCase().trim()
+          ])
+        );
+  
+        console.log(
+          "Store map loaded:",
+          Object.keys(storeMap).length,
+          "stores"
+        );
+  
+        defaultStoreIDs = Object.entries(storeMap)
+          .filter(([id, name]) => DEFAULT_STORES.includes(name))
+          .map(([id]) => id);
+  
+        console.log("Default store IDs:", defaultStoreIDs);
+  
+        if (defaultStoreIDs.length === 0) {
+          throw new Error("No matching default stores found");
+        }
+  
+        return true;
+  
+      } catch (err) {
+        const status = err.response?.status;
+  
+        const retryAfter = err.response?.headers?.["retry-after"]
+          ? Number(err.response.headers["retry-after"])
+          : null;
+  
+        const delay = retryAfter
+          ? retryAfter * 1000
+          : Math.min(60000, 2000 * attempt);
+  
+        console.warn(
+          `CheapShark stores error (${status || "no-status"}) ` +
+          `attempt ${attempt}/${MAX_ATTEMPTS}, retrying in ${delay}ms`
+        );
+  
+        if (attempt === MAX_ATTEMPTS) {
+          console.error("Failed loading stores after max attempts");
+          return false;
+        }
+  
+        await new Promise(r => setTimeout(r, delay));
+      }
     }
   }
   
