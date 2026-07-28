@@ -59,7 +59,16 @@ export async function mountGaming(app) {
   
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
-        const res = await axios.get("https://www.cheapshark.com/api/1.0/stores");
+        const res = await axios.get(
+          "https://www.cheapshark.com/api/1.0/stores",
+          {
+            timeout: 10000,
+            headers: {
+              "User-Agent": "Mozilla/5.0 (compatible; bruncher-api/1.0)",
+              "Accept": "application/json"
+            }
+          }
+        );
   
         storeMap = Object.fromEntries(
           res.data.map(s => [
@@ -88,6 +97,12 @@ export async function mountGaming(app) {
   
       } catch (err) {
         const status = err.response?.status;
+
+        console.log("---- CheapShark stores failure ----");
+        console.log("Status:", status);
+        console.log("Headers:", err.response?.headers);
+        console.log("Body:", err.response?.data);
+        console.log("Message:", err.message);
   
         const retryAfter = err.response?.headers?.["retry-after"]
           ? Number(err.response.headers["retry-after"])
