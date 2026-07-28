@@ -22,15 +22,35 @@ export async function mountGaming(app) {
   let cache = {};
   const CACHE_TTL = 1000 * 60 * 60; // 1 hour
   const CURRENCIES = ["USD"]; // CheapShark deals are only available in USD
-  const DEFAULT_STORES = ["steam", "humble store", "fanatical"].map(s => s.toLowerCase().trim());
   
+  //const DEFAULT_STORES = ["steam", "humble store", "fanatical"].map(s => s.toLowerCase().trim());
+  
+  //const STORE_PRIORITY = {
+  //  "steam": 1,
+  //  "humble store": 2,
+  //  "fanatical": 3
+  //};
+  //let storeMap = {};
+  //let defaultStoreIDs = [];
+
+  // hard coding for now because the store ids are consistent and the call seems to be failing often
   const STORE_PRIORITY = {
     "steam": 1,
     "humble store": 2,
     "fanatical": 3
   };
-  let storeMap = {};
-  let defaultStoreIDs = [];
+  
+  const storeMap = {
+    "1": "steam",
+    "11": "humble store",
+    "15": "fanatical"
+  };
+  
+  const defaultStoreIDs = [
+    "1",
+    "11",
+    "15"
+  ];
   
   /**
    * Load storeID -> storeName map
@@ -54,78 +74,79 @@ export async function mountGaming(app) {
   //  }
   //}
 
-  async function loadStores() {
-    const MAX_ATTEMPTS = 50;
+  // hide for now because the call is failing often so the stores are hardcoded above
+  //async function loadStores() {
+  //  const MAX_ATTEMPTS = 50;
   
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      try {
-        const res = await axios.get(
-          "https://www.cheapshark.com/api/1.0/stores",
-          {
-            timeout: 10000,
-            headers: {
-              "User-Agent": "Mozilla/5.0 (compatible; bruncher-api/1.0)",
-              "Accept": "application/json"
-            }
-          }
-        );
+  //  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  //    try {
+  //      const res = await axios.get(
+  //        "https://www.cheapshark.com/api/1.0/stores",
+  //        {
+  //          timeout: 10000,
+  //          headers: {
+  //            "User-Agent": "Mozilla/5.0 (compatible; bruncher-api/1.0)",
+  //            "Accept": "application/json"
+  //          }
+  //        }
+  //      );
   
-        storeMap = Object.fromEntries(
-          res.data.map(s => [
-            s.storeID,
-            s.storeName.toLowerCase().trim()
-          ])
-        );
+  //      storeMap = Object.fromEntries(
+  //        res.data.map(s => [
+  //          s.storeID,
+  //          s.storeName.toLowerCase().trim()
+  //        ])
+  //      );
   
-        console.log(
-          "Store map loaded:",
-          Object.keys(storeMap).length,
-          "stores"
-        );
+  //      console.log(
+  //        "Store map loaded:",
+  //        Object.keys(storeMap).length,
+  //        "stores"
+  //      );
   
-        defaultStoreIDs = Object.entries(storeMap)
-          .filter(([id, name]) => DEFAULT_STORES.includes(name))
-          .map(([id]) => id);
+  //      defaultStoreIDs = Object.entries(storeMap)
+  //        .filter(([id, name]) => DEFAULT_STORES.includes(name))
+  //        .map(([id]) => id);
   
-        console.log("Default store IDs:", defaultStoreIDs);
+  //      console.log("Default store IDs:", defaultStoreIDs);
   
-        if (defaultStoreIDs.length === 0) {
-          throw new Error("No matching default stores found");
-        }
+  //      if (defaultStoreIDs.length === 0) {
+  //        throw new Error("No matching default stores found");
+  //      }
   
-        return true;
+  //      return true;
   
-      } catch (err) {
-        const status = err.response?.status;
+  //    } catch (err) {
+  //      const status = err.response?.status;
 
-        console.log("---- CheapShark stores failure ----");
-        console.log("Status:", status);
-        console.log("Headers:", err.response?.headers);
-        console.log("Body:", err.response?.data);
-        console.log("Message:", err.message);
+  //      console.log("---- CheapShark stores failure ----");
+  //      console.log("Status:", status);
+  //      console.log("Headers:", err.response?.headers);
+  //      console.log("Body:", err.response?.data);
+  //      console.log("Message:", err.message);
   
-        const retryAfter = err.response?.headers?.["retry-after"]
-          ? Number(err.response.headers["retry-after"])
-          : null;
+  //      const retryAfter = err.response?.headers?.["retry-after"]
+  //        ? Number(err.response.headers["retry-after"])
+  //        : null;
   
-        const delay = retryAfter
-          ? retryAfter * 1000
-          : Math.min(60000, 2000 * attempt);
+  //      const delay = retryAfter
+  //        ? retryAfter * 1000
+  //        : Math.min(60000, 2000 * attempt);
   
-        console.warn(
-          `CheapShark stores error (${status || "no-status"}) ` +
-          `attempt ${attempt}/${MAX_ATTEMPTS}, retrying in ${delay}ms`
-        );
+  //      console.warn(
+  //        `CheapShark stores error (${status || "no-status"}) ` +
+  //        `attempt ${attempt}/${MAX_ATTEMPTS}, retrying in ${delay}ms`
+  //      );
   
-        if (attempt === MAX_ATTEMPTS) {
-          console.error("Failed loading stores after max attempts");
-          return false;
-        }
+  //      if (attempt === MAX_ATTEMPTS) {
+  //        console.error("Failed loading stores after max attempts");
+  //        return false;
+  //      }
   
-        await new Promise(r => setTimeout(r, delay));
-      }
-    }
-  }
+  //      await new Promise(r => setTimeout(r, delay));
+  //    }
+  //  }
+  //}
   
   /**
    * Fetch deals from CheapShark (multiple pages) and store in cache
@@ -303,7 +324,9 @@ export async function mountGaming(app) {
    * Pre-warm USD on startup
    */
   async function preWarm() {
-    await loadStores();
+    
+    // hide for now because we are not calling it
+    //await loadStores();
 
     const lastUpdate = cache.USD?.timestamp || 0;
     const age = Date.now() - lastUpdate;
