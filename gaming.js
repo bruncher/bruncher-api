@@ -234,7 +234,9 @@ export async function mountGaming(app) {
           console.warn(`⚠️ Cooling down ${cooldown}s before retrying...`);
           await new Promise(r => setTimeout(r, cooldown * 1000));
           
-          continue;
+          //continue;
+          // changing to return to try to prevent any excessive/embedded retry loops
+          return;
         }
               
         let newDealsThisPage = 0;
