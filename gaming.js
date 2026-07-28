@@ -193,9 +193,18 @@ export async function mountGaming(app) {
 
             break; // success → exit loop
           } catch (err) {
+            
             attempts++;
 
             const status = err.response?.status;
+
+            if (status === 403) {
+              console.error("CheapShark returned 403. Bot protection detected. Aborting refresh.");
+            
+              // Don't retry this page
+              return;
+            }
+            
             retryAfter = err.response?.headers?.["retry-after"]
               ? parseInt(err.response.headers["retry-after"], 10)
               : null;
