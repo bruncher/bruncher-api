@@ -194,7 +194,7 @@ export async function mountGaming(app) {
               headers: {
                 "User-Agent": "Mozilla/5.0 (compatible; api-client)",
                 "Accept": "application/json"
-              }
+              },
               timeout: 30000
             });
 
@@ -211,21 +211,21 @@ export async function mountGaming(app) {
                 : null;
               
               console.error("CheapShark returned 403, aborting refresh.", {
-                url: error.config?.url,
-                params: error.config?.params,
-                method: error.config?.method,
+                url: err.config?.url,
+                params: err.config?.params,
+                method: err.config?.method,
                 htmlTitle,
                 requestHeaders: {
-                  "user-agent": error.config?.headers?.["User-Agent"],
-                  "accept": error.config?.headers?.["Accept"]
+                  "user-agent": err.config?.headers?.["User-Agent"],
+                  "accept": err.config?.headers?.["Accept"]
                 },
-                responseHeaders: error.response?.headers,
-                contentType: error.response?.headers?.["content-type"],
-                server: error.response?.headers?.["server"],
-                cfRay: error.response?.headers?.["cf-ray"],
-                dataPreview: typeof error.response?.data === "string"
-                  ? error.response.data.substring(0, 500)
-                  : error.response?.data
+                responseHeaders: err.response?.headers,
+                contentType: err.response?.headers?.["content-type"],
+                server: err.response?.headers?.["server"],
+                cfRay: err.response?.headers?.["cf-ray"],
+                dataPreview: typeof err.response?.data === "string"
+                  ? err.response.data.substring(0, 500)
+                  : err.response?.data
               });
             
               gamingRefreshTTL = ERROR_TTL;
