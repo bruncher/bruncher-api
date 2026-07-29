@@ -192,8 +192,9 @@ export async function mountGaming(app) {
                 storeID: storeIDs.join(",")
               },
               headers: {
-                "User-Agent": "Mozilla/5.0 (compatible; api-client)",
-                "Accept": "application/json"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/139.0.0.0 Safari/537.36",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9"
               },
               timeout: 30000
             });
@@ -223,6 +224,8 @@ export async function mountGaming(app) {
                 contentType: err.response?.headers?.["content-type"],
                 server: err.response?.headers?.["server"],
                 cfRay: err.response?.headers?.["cf-ray"],
+                cfMitigated: error.response?.headers?.["cf-mitigated"],
+                serverTiming: error.response?.headers?.["server-timing"],
                 dataPreview: typeof err.response?.data === "string"
                   ? err.response.data.substring(0, 500)
                   : err.response?.data
