@@ -212,15 +212,15 @@ export async function mountGaming(app) {
 
             if (status === 403) {
               console.error("CheapShark returned 403, aborting refresh.", {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
+                status: err.response?.status,
+                statusText: err.response?.statusText,
                 headers: {
-                  "retry-after": error.response?.headers?.["retry-after"],
-                  "content-type": error.response?.headers?.["content-type"]
+                  "retry-after": err.response?.headers?.["retry-after"],
+                  "content-type": err.response?.headers?.["content-type"]
                 },
-                data: typeof error.response?.data === "string"
-                  ? error.response.data.substring(0, 200)
-                  : error.response?.data
+                data: typeof err.response?.data === "string"
+                  ? err.response.data.substring(0, 200)
+                  : err.response?.data
               });
             
               gamingRefreshTTL = ERROR_TTL;
