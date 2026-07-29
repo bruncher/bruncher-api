@@ -21,7 +21,7 @@ export async function mountGaming(app) {
   // In-memory cache per currency
   let cache = {};
   const CACHE_TTL = 1000 * 60 * 60; // 1 hour
-  const ERROR_TTL = 1000 * 60 * 60 * 3; // 3 hours
+  const ERROR_TTL = 1000 * 60 * 60 * 6; // 6 hours
   let gamingRefreshTTL = CACHE_TTL;
   const CURRENCIES = ["USD"]; // CheapShark deals are only available in USD
   
@@ -190,7 +190,17 @@ export async function mountGaming(app) {
                 pageNumber: page,
                 cc: currency,
                 storeID: storeIDs.join(",")
-              }
+              },
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache"
+              },
+              timeout: 30000
             });
 
             break; // success → exit loop
@@ -201,7 +211,17 @@ export async function mountGaming(app) {
             const status = err.response?.status;
 
             if (status === 403) {
-              console.error("CheapShark returned 403, aborting refresh.");
+              console.error("CheapShark returned 403, aborting refresh.", {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                headers: {
+                  "retry-after": error.response?.headers?.["retry-after"],
+                  "content-type": error.response?.headers?.["content-type"]
+                },
+                data: typeof error.response?.data === "string"
+                  ? error.response.data.substring(0, 200)
+                  : error.response?.data
+              });
             
               gamingRefreshTTL = ERROR_TTL;
               return;
