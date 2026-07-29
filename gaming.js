@@ -192,14 +192,9 @@ export async function mountGaming(app) {
                 storeID: storeIDs.join(",")
               },
               headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive",
-                "Cache-Control": "no-cache",
-                "Pragma": "no-cache"
-              },
+                "User-Agent": "Mozilla/5.0 (compatible; api-client)",
+                "Accept": "application/json"
+              }
               timeout: 30000
             });
 
@@ -211,16 +206,26 @@ export async function mountGaming(app) {
             const status = err.response?.status;
 
             if (status === 403) {
+              const htmlTitle = typeof err.response?.data === "string"
+                ? err.response.data.match(/<title>(.*?)<\/title>/i)?.[1]
+                : null;
+              
               console.error("CheapShark returned 403, aborting refresh.", {
-                status: err.response?.status,
-                statusText: err.response?.statusText,
-                headers: {
-                  "retry-after": err.response?.headers?.["retry-after"],
-                  "content-type": err.response?.headers?.["content-type"]
+                url: error.config?.url,
+                params: error.config?.params,
+                method: error.config?.method,
+                htmlTitle,
+                requestHeaders: {
+                  "user-agent": error.config?.headers?.["User-Agent"],
+                  "accept": error.config?.headers?.["Accept"]
                 },
-                data: typeof err.response?.data === "string"
-                  ? err.response.data.substring(0, 200)
-                  : err.response?.data
+                responseHeaders: error.response?.headers,
+                contentType: error.response?.headers?.["content-type"],
+                server: error.response?.headers?.["server"],
+                cfRay: error.response?.headers?.["cf-ray"],
+                dataPreview: typeof error.response?.data === "string"
+                  ? error.response.data.substring(0, 500)
+                  : error.response?.data
               });
             
               gamingRefreshTTL = ERROR_TTL;
