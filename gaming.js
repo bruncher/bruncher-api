@@ -224,8 +224,8 @@ export async function mountGaming(app) {
                 contentType: err.response?.headers?.["content-type"],
                 server: err.response?.headers?.["server"],
                 cfRay: err.response?.headers?.["cf-ray"],
-                cfMitigated: error.response?.headers?.["cf-mitigated"],
-                serverTiming: error.response?.headers?.["server-timing"],
+                cfMitigated: err.response?.headers?.["cf-mitigated"],
+                serverTiming: err.response?.headers?.["server-timing"],
                 dataPreview: typeof err.response?.data === "string"
                   ? err.response.data.substring(0, 500)
                   : err.response?.data
