@@ -431,8 +431,6 @@ export async function mountGaming(app) {
     }, gamingRefreshTTL);
   }
   
-  scheduleGamingRefresh();
-  
   // Global cache for Steam metadata
   const steamMetaCache = {};
 
@@ -703,6 +701,8 @@ export async function mountGaming(app) {
       await enrichWithSteamData(allDeals)
         .catch(err => console.error("Initial Steam enrichment failed:", err));
     }
+
+    scheduleGamingRefresh();
     
     console.log(
       `⏰ Next gaming refresh: ${new Date(Date.now() + gamingRefreshTTL).toLocaleString("en-CA", {
