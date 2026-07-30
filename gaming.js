@@ -192,10 +192,9 @@ export async function mountGaming(app) {
                 storeID: storeIDs.join(",")
               },
               headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/139.0.0.0 Safari/537.36",
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": "en-US,en;q=0.9"
-              },
+                "User-Agent": "gaming-api/1.0",
+                "Accept": "application/json"
+              }
               timeout: 30000
             });
 
