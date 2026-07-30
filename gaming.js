@@ -194,7 +194,7 @@ export async function mountGaming(app) {
               headers: {
                 "User-Agent": "gaming-api/1.0",
                 "Accept": "application/json"
-              }
+              },
               timeout: 30000
             });
 
