@@ -233,6 +233,10 @@ export async function mountGaming(app) {
             
               gamingRefreshTTL = ERROR_TTL;
               return;
+            } else {
+                console.log("Status:", err.response?.status);
+                console.log("Body:", err.response?.data);
+                console.log("Params:", err.config?.params);
             }
             
             retryAfter = err.response?.headers?.["retry-after"]
