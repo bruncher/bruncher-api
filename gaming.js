@@ -236,15 +236,18 @@ export async function mountGaming(app) {
                 console.log("Status:", err.response?.status);
                 console.log("Body:", err.response?.data);
                 console.log("Params:", err.config?.params);
+                console.log("Axios error:", err.message);
+                console.log("Code:", err.code);
             }
             
             retryAfter = err.response?.headers?.["retry-after"]
               ? parseInt(err.response.headers["retry-after"], 10)
               : null;
-        
-            // backoff delay
-            const delay = 1000 * attempts;
-        
+            
+            const delay = retryAfter
+              ? retryAfter * 1000
+              : Math.min(30000, 1000 * Math.pow(2, attempts));
+            
             console.warn(
               `CheapShark error (${status || "no-status"}) for ${currency} page ${page} → retry ${attempts}/${MAX_ATTEMPTS} in ${delay}ms` +
               (retryAfter ? ` | Retry-After: ${retryAfter}s` : "")
