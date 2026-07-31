@@ -20,7 +20,7 @@ export async function mountGaming(app) {
   
   // In-memory cache per currency
   let cache = {};
-  const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+  const CACHE_TTL = 1000 * 60 * 60 * 2; // 2 hours
   const ERROR_TTL = 1000 * 60 * 60 * 12; // 12 hours
   let gamingRefreshTTL = CACHE_TTL;
   const CURRENCIES = ["USD"]; // CheapShark deals are only available in USD
