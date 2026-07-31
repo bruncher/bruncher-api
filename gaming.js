@@ -23,6 +23,7 @@ export async function mountGaming(app) {
   const CACHE_TTL = 1000 * 60 * 60 * 2; // 2 hours
   const ERROR_TTL = 1000 * 60 * 60 * 12; // 12 hours
   let gamingRefreshTTL = CACHE_TTL;
+  let gamingRefreshTimer = null;
   const CURRENCIES = ["USD"]; // CheapShark deals are only available in USD
   
   //const DEFAULT_STORES = ["steam", "humble store", "fanatical"].map(s => s.toLowerCase().trim());
@@ -397,31 +398,45 @@ export async function mountGaming(app) {
   /**
    * Set up hourly update for all currencies (USD only), and enrich with steam data
    */
-  //setInterval(async () => {
-  //  for (const currency of CURRENCIES) {
-  //    await fetchDeals(currency, defaultStoreIDs);
-  //  }
-  
-  //  await enrichWithSteamData(cache["USD"]?.data || [])
-  //    .catch(err => console.error("Hourly Steam enrichment failed:", err));
 
-  //  console.log(
-  //    `⏰ Next gaming refresh: ${new Date(Date.now() + CACHE_TTL).toLocaleString("en-CA", {
-  //      timeZone: "America/Toronto"
-  //    })}`
-  //  );
-    
-  //}, gamingRefreshTTL);
+  //function scheduleGamingRefresh() {
+  //  setTimeout(async () => {
+  
+  //    for (const currency of CURRENCIES) {
+  //      await fetchDeals(currency, defaultStoreIDs);
+  //    }
+  
+  //    await enrichWithSteamData(cache["USD"]?.data || [])
+  //      .catch(err => console.error("Hourly Steam enrichment failed:", err));
+  
+  //    console.log(
+  //      `⏰ Next gaming refresh: ${new Date(Date.now() + gamingRefreshTTL).toLocaleString("en-CA", {
+  //        timeZone: "America/Toronto"
+  //      })}`
+  //    );
+  
+  //    scheduleGamingRefresh();
+  
+  //  }, gamingRefreshTTL);
+  //}
 
   function scheduleGamingRefresh() {
-    setTimeout(async () => {
+    // prevent duplicate scheduled refreshes
+    if (gamingRefreshTimer) {
+      clearTimeout(gamingRefreshTimer);
+      console.log("♻️ Cleared existing gaming refresh timer");
+    }
+  
+    gamingRefreshTimer = setTimeout(async () => {
+  
+      gamingRefreshTimer = null;
   
       for (const currency of CURRENCIES) {
         await fetchDeals(currency, defaultStoreIDs);
       }
   
       await enrichWithSteamData(cache["USD"]?.data || [])
-        .catch(err => console.error("Hourly Steam enrichment failed:", err));
+        .catch(err => console.error("Gaming Steam enrichment failed:", err));
   
       console.log(
         `⏰ Next gaming refresh: ${new Date(Date.now() + gamingRefreshTTL).toLocaleString("en-CA", {
