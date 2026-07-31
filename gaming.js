@@ -317,7 +317,7 @@ export async function mountGaming(app) {
           `Page ${page + 1}: +${newDealsThisPage} unique (${Object.keys(uniqueGames).length}/${TARGET_UNIQUE_DEALS})`
         );
 
-        await new Promise(r => setTimeout(r, 250));
+        await new Promise(r => setTimeout(r, 500));  // increased to 500 ms between calls to avoid sending too fast
       
         page++;
       }
