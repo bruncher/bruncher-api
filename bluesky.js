@@ -17,23 +17,22 @@ async function login() {
   loggedIn = true;
 }
 
-async function postToBluesky(text) {
+async function post(text) {
   await login();
 
   if (!text || !text.trim()) {
-    throw new Error('Bluesky post cannot be empty.');
+    throw new Error('Bluesky post cannot be empty');
   }
 
-  const post = await agent.post({
+  if ([...text].length > 300) {
+    throw new Error('Bluesky post exceeds 300 characters');
+  }
+
+  return await agent.post({
     text: text.trim()
   });
-
-  return {
-    uri: post.uri,
-    cid: post.cid
-  };
 }
 
 module.exports = {
-  postToBluesky
+  post
 };
