@@ -1,7 +1,7 @@
-const { BskyAgent } = require('@atproto/api');
+import { BskyAgent } from "@atproto/api";
 
 const agent = new BskyAgent({
-  service: 'https://bsky.social'
+  service: "https://bsky.social"
 });
 
 let loggedIn = false;
@@ -15,24 +15,30 @@ async function login() {
   });
 
   loggedIn = true;
+
+  console.log("🦋 Bluesky authenticated");
 }
 
-async function post(text) {
+export async function postToBluesky(text) {
   await login();
 
   if (!text || !text.trim()) {
-    throw new Error('Bluesky post cannot be empty');
+    throw new Error("Bluesky post cannot be empty");
   }
 
-  if ([...text].length > 300) {
-    throw new Error('Bluesky post exceeds 300 characters');
+  const trimmedText = text.trim();
+
+  if ([...trimmedText].length > 300) {
+    throw new Error(
+      `Bluesky post exceeds 300 characters (${[...trimmedText].length})`
+    );
   }
 
-  return await agent.post({
-    text: text.trim()
+  const result = await agent.post({
+    text: trimmedText
   });
-}
 
-module.exports = {
-  post
-};
+  console.log("🦋 Bluesky post published");
+
+  return result;
+}
